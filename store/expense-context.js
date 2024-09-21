@@ -1,4 +1,4 @@
-const { createContext, useReducer } = require("react");
+import { createContext, useReducer } from "react";
 
 
 const DUMMY_EXPENSES = [
@@ -84,7 +84,11 @@ function expenseReducer(state, action) {
 
             return state.filter((expense) => expense.id !== action.payload)
 
+        case "SET":
+            return action.payload; // Set new list of expenses
 
+        case "CLEAR":
+            return []; // Clear all expenses
         default:
             return state
 
@@ -105,8 +109,29 @@ function ExpenseContextProvider({ children }) {
         dispatch({ type: "UPDATE", payload: { id, data: expenseData } });
     }
 
-    <ExpenseContext.Provider>{children}</ExpenseContext.Provider>
+    function setExpenses(expenses) {
+        dispatch({ type: "SET", payload: expenses });
+    }
 
+    // Clear all expenses
+    function clearExpenses() {
+        dispatch({ type: "CLEAR" });
+    }
+
+    const value = {
+        expenses: expensesState,
+        addExpense,
+        deleteExpense,
+        updateExpense,
+        setExpenses,
+        clearExpenses
+    }
+
+    return (
+        <ExpenseContext.Provider value={value}>
+            {children}
+        </ExpenseContext.Provider>
+    );
 }
 
 export default ExpenseContextProvider
