@@ -4,12 +4,14 @@ import { ExpenseContext } from "../store/expense-context";
 import { getDateMinusDays } from "../utils/date";
 import { fetchExpenses } from "../utils/http";
 import LoadingOverlay from "../components/UI/LoadingOverlay";
+import ErrorOverlay from "../components/UI/ErrorOverlay";
 
 
 
 function RecentExpense() {
     const expensesCtx = useContext(ExpenseContext)
     const [isFetching, setIsFetching] = useState(true)
+    const [error, setError] = useState()
 
 
 
@@ -17,16 +19,26 @@ function RecentExpense() {
     useEffect(() => {
         const fetchExpensesData = async () => {
             setIsFetching(true)
-            const response = await fetchExpenses()
+            try {
 
-            console.log(response);
+                const response = await fetchExpenses()
 
-            expensesCtx.setExpenses(response)
-            setIsFetching(false)
+
+
+                expensesCtx.setExpenses(response)
+            } catch (error) {
+
+
+                setError(error.message)
+            }
+            finally {
+
+                setIsFetching(false)
+            }
         }
         fetchExpensesData();
     }, [])
-    console.log(expensesCtx.expenses);
+
     const recentExpenses = expensesCtx.expenses.filter((expenses) => {
         const today = new Date();
         const date7DaysAgo = getDateMinusDays(today, 7)
@@ -34,9 +46,19 @@ function RecentExpense() {
         return ((expenses.date >= date7DaysAgo) && (expenses.date <= today))
 
     })
-    // if (isFetching) {
-    //     return <LoadingOverlay />
-    // }
+
+    function errorHandler() {
+        setError(null)
+    }
+
+    if (error) {
+
+
+        return <ErrorOverlay message={error} onConfirm={errorHandler}>{error}</ErrorOverlay>
+    }
+    if (isFetching) {
+        return <LoadingOverlay />
+    }
 
     return <ExpenseOutput expenses={recentExpenses} expensesperiod="Last 7 Days" fallbackText="NO Expenses Registered For Last 7 Days" />
 }

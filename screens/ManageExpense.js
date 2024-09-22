@@ -8,6 +8,7 @@ import { StyleSheet, View } from "react-native";
 import ManageExpenseInput from "../components/manageExpense/ExpenseForm";
 import { deleteExpense, storeExpense, updateExpense } from "../utils/http";
 import LoadingOverlay from "../components/UI/LoadingOverlay";
+import ErrorOverlay from "../components/UI/ErrorOverlay";
 
 
 
@@ -15,6 +16,7 @@ import LoadingOverlay from "../components/UI/LoadingOverlay";
 function ManageExpense({ route, navigation }) {
     const expenseCtx = useContext(ExpenseContext)
     const [isSubmiting, setIsSubmitting] = useState(false)
+    const [error, setError] = useState()
 
     const editedExpenseId = route.params?.expenseId;
 
@@ -41,19 +43,37 @@ function ManageExpense({ route, navigation }) {
     }
     async function confirmHandler(expenseData) {
         setIsSubmitting(true)
-        if (isEditing) {
+        try {
+            if (isEditing) {
 
-            expenseCtx.updateExpense(editedExpenseId, expenseData)
-            await updateExpense(editedExpenseId, expenseData)
+                expenseCtx.updateExpense(editedExpenseId, expenseData)
+                await updateExpense(editedExpenseId, expenseData)
+            }
 
+
+            else {
+
+                const id = await storeExpense(expenseData)
+                expenseCtx.addExpense({ ...expenseData, id: id })
+
+
+            }
+        } catch (err) {
+            setError("Please Try Again")
         }
-        else {
-            const id = await storeExpense(expenseData)
-            expenseCtx.addExpense({ ...expenseData, id: id })
+        finally {
 
+            setIsSubmitting(true)
+            navigation.goBack();
         }
-        setIsSubmitting(true)
-        navigation.goBack();
+    }
+
+    function errorHandler() {
+
+        setError(null)
+    }
+    if (error) {
+        return <ErrorOverlay message={error} onConfirm={errorHandler} />
     }
 
     if (isSubmiting) {
